@@ -8,7 +8,7 @@ import numpy
 from discopy.cat import AxiomError, rsubs
 from discopy.tensor import array2string, Dim, Tensor
 from discopy.quantum.circuit import (
-    Digit, Ty, bit, qubit, Box, Swap, Sum, Id,
+    Circuit, Digit, Ty, bit, qubit, Box, Swap, Sum, Id,
     AntiConjugate, RealConjugate, Anti2QubitConjugate)
 
 
@@ -293,23 +293,56 @@ class Controlled(QuantumGate):
         Number of qubits from the control to the target, default is :code:`0`.
         If negative, the control is on the right of the target.
     """
-    def __init__(self, controlled, distance=0):
+    def __init__(self, controlled, distance=1):
         if not isinstance(controlled, QuantumGate):
             raise TypeError(QuantumGate, controlled)
-        self.controlled, self.distance = controlled, distance
-        self.draw_as_controlled = True
-        array = numpy.zeros((4, 4), dtype=complex)
-        array[:2, :2] = numpy.eye(2)
-        array[2:, 2:] = controlled.array
-        if distance != 0:
+        if distance == 0:
             raise NotImplementedError
         name = "C" + controlled.name
-        n_qubits = len(controlled.dom) + (
-            distance + 1 if distance >= 0 else -distance)
+        n_qubits = len(controlled.dom) + abs(distance)
+        self.controlled, self.distance = controlled, distance
+        self.draw_as_controlled = True
+        array = None
         super().__init__(name, n_qubits, array)
 
     def dagger(self):
         return Controlled(self.controlled.dagger(), distance=self.distance)
+
+    def conjugate(self):
+        controlled_conj = self.controlled.conjugate()
+        return Controlled(controlled_conj, distance=-self.distance)
+
+    def __repr__(self):
+        if self in GATES:
+            return self.name
+        return f'Controlled({self.controlled}, distance={self.distance})'
+
+    def __eq__(self, other):
+        if isinstance(other, Controlled):
+            return (self.distance == other.distance
+                    and self.controlled == other.controlled)
+        return super().__eq__(other)
+
+    __hash__ = QuantumGate.__hash__
+    l = r = property(conjugate)
+
+    @property
+    def array(self):
+        controlled, distance = self.controlled, self.distance
+        n_qubits = len(self.dom)
+        if distance == 1:
+            array = numpy.zeros((4, 4), dtype=complex)
+            array[:2, :2] = numpy.eye(2)
+            array[2:, 2:] = controlled.array
+        else:
+            src, tgt = (0, 1) if distance > 0 else (1, 0)
+            middle = list(range(2, n_qubits))
+            perm = Circuit.permutation([src] + middle + [tgt])
+            diagram = (perm
+                       >> type(self)(controlled) @ Id(abs(distance) - 1)
+                       >> perm[::-1])
+            array = diagram.eval().array
+        return array
 
 
 class Parametrized(Box):
@@ -579,10 +612,6 @@ class Sqrt(Scalar):
 
 
 SWAP = Swap(qubit, qubit)
-CZ = QuantumGate('CZ', 2, [1, 0, 0, 0,
-                           0, 1, 0, 0,
-                           0, 0, 1, 0,
-                           0, 0, 0, -1], _dagger=None)
 H = QuantumGate(
     'H', 1, 1 / numpy.sqrt(2) * numpy.array([1, 1, 1, -1]),
     _dagger=None, _conjugate=None)
@@ -592,6 +621,7 @@ X = QuantumGate('X', 1, [0, 1, 1, 0], _dagger=None, _conjugate=None)
 Y = QuantumGate('Y', 1, [0, -1j, 1j, 0], _dagger=None)
 Z = QuantumGate('Z', 1, [1, 0, 0, -1], _dagger=None, _conjugate=None)
 CX = Controlled(X)
+CZ = Controlled(Z)
 
 GATES = [SWAP, CZ, CX, H, S, T, X, Y, Z]
 

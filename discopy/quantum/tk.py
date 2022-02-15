@@ -14,7 +14,7 @@ from discopy import messages
 from discopy.quantum.circuit import (
     Functor, Id, bit, qubit, Discard, Measure)
 from discopy.quantum.gates import (
-    ClassicalGate, QuantumGate, Bits, Bra, Ket,
+    ClassicalGate, Controlled, QuantumGate, Bits, Bra, Ket,
     Swap, Scalar, MixedScalar, GATES, X, Rx, Rz, CRz, format_number)
 
 
@@ -212,6 +212,12 @@ def to_tk(circuit):
             tk_circ.__getattribute__(box.name[:2])(2 * box.phase, *i_qubits)
         elif isinstance(box, CRz):
             tk_circ.__getattribute__(box.name[:3])(2 * box.phase, *i_qubits)
+        elif isinstance(box, Controlled) and '(' not in box.name:
+            assert len(box.dom) == 2
+            src, tgt = qubits[offset], qubits[offset + abs(box.distance)]
+            if box.distance < 0:
+                src, tgt = tgt, src
+            tk_circ.__getattribute__(box.name)(src, tgt)
         elif hasattr(tk_circ, box.name):
             tk_circ.__getattribute__(box.name)(*i_qubits)
         else:

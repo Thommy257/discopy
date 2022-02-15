@@ -498,7 +498,7 @@ def test_Controlled():
     with raises(TypeError):
         Controlled(None)
     with raises(NotImplementedError):
-        Controlled(X, distance=-1)
+        Controlled(X, distance=0)
 
 
 def test_adjoint():
@@ -526,9 +526,7 @@ def test_adjoint():
         Swap(qubit, qubit) >> CRx(-0.5) >> Swap(qubit, qubit),
         Swap(qubit, qubit) >> CRz(-0.7) >> Swap(qubit, qubit),
         Scalar(1 - 2j),
-        QuantumGate(
-            'CX', n_qubits=2, _conjugate=True,
-            array=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0]),
+        Controlled(X, distance=-1),
         Swap(qubit, bit), Copy(), Match()
     ]
 
