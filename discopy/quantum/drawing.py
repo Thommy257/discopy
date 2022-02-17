@@ -63,11 +63,12 @@ def draw_controlled_gate(backend, positions, node, **params):
     controlled_box = add_drawing_attributes(box.controlled.downgrade())
     controlled = Node("box", box=controlled_box, depth=depth)
     # TODO select obj properly for classical gates
+    c_size = len(box.controlled.dom)
     c_dom = Node("dom", obj=box.dom[0], i=index[1], depth=depth)
     c_cod = Node("cod", obj=box.cod[0], i=index[1], depth=depth)
     c_middle =\
         positions[c_dom][0], (positions[c_dom][1] + positions[c_cod][1]) / 2
-    target = (positions[c_dom][0],
+    target = (positions[c_dom][0] + (c_size - 1) / 2,
               (positions[c_dom][1] + positions[c_cod][1]) / 2)
     if controlled_box.name == "X":  # CX gets drawn as a circled plus sign.
         backend.draw_wire(positions[c_dom], positions[c_cod])
@@ -82,11 +83,18 @@ def draw_controlled_gate(backend, positions, node, **params):
             nodesize=2 * params.get("nodesize", 1))
         target_boundary = target
     else:
-        fake_dom = Node("dom", obj=box.dom[0], i=0, depth=depth)
-        fake_cod = Node("cod", obj=box.dom[0], i=0, depth=depth)
+        node_top_left = Node("dom", obj=box.dom[0], i=0, depth=depth)
+        node_top_right = Node("dom", obj=box.dom[0], i=c_size - 1, depth=depth)
+        node_bot_left = Node("cod", obj=box.dom[0], i=0, depth=depth)
+        node_bot_right = Node("cod", obj=box.dom[0], i=c_size - 1, depth=depth)
+        top_left = positions[c_dom]
+        top_right = top_left[0] + c_size - 1, top_left[0]
+        bot_left = positions[c_cod]
+        bot_right = bot_left[0] + c_size - 1, bot_left[0]
         fake_positions = {
             controlled: target,
-            fake_dom: positions[c_dom], fake_cod: positions[c_cod]}
+            node_top_left: top_left, node_top_right: top_right,
+            node_bot_left: bot_left, node_bot_right: bot_right}
         backend = draw_box(backend, fake_positions, controlled, **params)
         if distance > 0:
             target_boundary = c_middle[0] - .25, c_middle[1]
@@ -95,7 +103,7 @@ def draw_controlled_gate(backend, positions, node, **params):
     backend.draw_wire(positions[dom], positions[cod])
 
     # draw all the other vertical wires
-    for i in range(1, len(box.dom) - 1):
+    for i in range(1, len(box.dom) - len(box.controlled.dom)):
         node1 = Node("dom", obj=box.dom[i], i=i, depth=depth)
         node2 = Node("cod", obj=box.cod[i], i=i, depth=depth)
         backend.draw_wire(positions[node1], positions[node2])

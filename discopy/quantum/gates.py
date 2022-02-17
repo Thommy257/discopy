@@ -331,9 +331,10 @@ class Controlled(QuantumGate):
         controlled, distance = self.controlled, self.distance
         n_qubits = len(self.dom)
         if distance == 1:
-            array = numpy.zeros((4, 4), dtype=complex)
-            array[:2, :2] = numpy.eye(2)
-            array[2:, 2:] = controlled.array
+            d = 1 << n_qubits - 1
+            array = numpy.zeros((2 * d, 2 * d), dtype=complex)
+            array[:d, :d] = numpy.eye(d)
+            array[d:, d:] = controlled.array.reshape(d, d)
         else:
             src, tgt = (0, 1) if distance > 0 else (1, 0)
             middle = list(range(2, n_qubits))
