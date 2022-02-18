@@ -485,7 +485,8 @@ class Diagram(rigid.Diagram):
         import tensornetwork as tn
         if dtype is None:
             dtype = self._infer_dtype()
-        nodes = [tn.CopyNode(2, dim, 'input_{}'.format(i), dtype=dtype)
+        nodes = [tn.CopyNode(2, dim.dim if hasattr(dim, 'dim') else dim,
+                             'input_{}'.format(i), dtype=dtype)
                  for i, dim in enumerate(self.dom)]
         inputs, scan = [n[0] for n in nodes], [n[1] for n in nodes]
         for box, offset in zip(self.boxes, self.offsets):

@@ -303,7 +303,7 @@ class Controlled(QuantumGate):
         self.controlled, self.distance = controlled, distance
         self.draw_as_controlled = True
         array = None
-        super().__init__(name, n_qubits, array)
+        super().__init__(name, n_qubits, array, data=controlled.data)
 
     def dagger(self):
         return Controlled(self.controlled.dagger(), distance=self.distance)
@@ -311,6 +311,10 @@ class Controlled(QuantumGate):
     def conjugate(self):
         controlled_conj = self.controlled.conjugate()
         return Controlled(controlled_conj, distance=-self.distance)
+
+    def lambdify(self, *symbols, **kwargs):
+        c_fn = self.controlled.lambdify(*symbols)
+        return lambda *xs: type(self)(c_fn(*xs), distance=self.distance)
 
     def __repr__(self):
         if self in GATES:
@@ -332,8 +336,8 @@ class Controlled(QuantumGate):
         n_qubits = len(self.dom)
         if distance == 1:
             d = 1 << n_qubits - 1
-            array = numpy.zeros((2 * d, 2 * d), dtype=complex)
-            array[:d, :d] = numpy.eye(d)
+            array = Tensor.np.zeros((2 * d, 2 * d), dtype=complex)
+            array[:d, :d] = Tensor.np.eye(d)
             array[d:, d:] = controlled.array.reshape(d, d)
         else:
             src, tgt = (0, 1) if distance > 0 else (1, 0)
@@ -343,7 +347,7 @@ class Controlled(QuantumGate):
                        >> type(self)(controlled) @ Id(abs(distance) - 1)
                        >> perm[::-1])
             array = diagram.eval().array
-        return array
+        return array.reshape(*[2] * 2 * n_qubits)
 
 
 class Parametrized(Box):
