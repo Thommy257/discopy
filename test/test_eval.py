@@ -6,9 +6,9 @@ from pytest import raises
 import tensornetwork as tn
 
 from discopy.quantum import (
-    Circuit,
-    Copy, CRz, Encode, Id, Ket, Rx, Rz, Measure, Discard,
-    bit, CX, H, SWAP, X, Y, Z)
+    Circuit, IQPansatz,
+    Bra, Copy, CRz, Encode, Id, Ket, Rx, Rz, Measure, Discard,
+    bit, sqrt, CX, H, SWAP, X, Y, Z)
 
 mixed_circuits = [
     (Copy() >> Encode(2) >> CX >> Rx(0.3) @ Rz(0.3)
@@ -24,6 +24,9 @@ pure_circuits = [
     H >> X >> Y >> Z,
     CX >> H @ Rz(0.5),
     CRz(0.123) >> Z @ Z,
+    CX >> H @ Id(1) >> Bra(0, 0),
+    IQPansatz(3, [[0.1, 0.2], [0.3, 0.4]]),
+    IQPansatz(3, [[0.1, 0.2], [0.3, 0.4]]).l.dagger(),
     Circuit.permutation([1, 2, 0])
 ]
 
