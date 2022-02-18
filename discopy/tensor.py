@@ -490,7 +490,7 @@ class Diagram(rigid.Diagram):
                  for i, dim in enumerate(self.dom)]
         inputs, scan = [n[0] for n in nodes], [n[1] for n in nodes]
         for box, offset in zip(self.boxes, self.offsets):
-            if isinstance(box, Swap):
+            if isinstance(box, rigid.Swap):
                 scan[offset], scan[offset + 1] = scan[offset + 1], scan[offset]
                 continue
             if isinstance(box, Spider):
@@ -515,7 +515,7 @@ class Diagram(rigid.Diagram):
 
     def _infer_dtype(self):
         for box in self.boxes:
-            if not isinstance(box, (Spider, Swap)):
+            if not isinstance(box, (Spider, rigid.Swap)):
                 array = box.array
                 while True:
                     # minimise data to potentially copy

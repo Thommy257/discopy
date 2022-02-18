@@ -542,25 +542,3 @@ def test_eval_no_qutrits():
     qutrit = Ty(Qudit(3))
     with raises(Exception):
         Box('qutrit box', qutrit, qutrit).to_tn(mixed=True)
-
-
-def test_mixed_tn():
-    import tensornetwork as tn
-    mixed_cs = [
-        (Copy() >> Encode(2) >> CX >> Rx(0.3) @ Rz(0.3)
-         >> SWAP >> Measure() @ Discard()),
-        (Copy() @ Id(bit) >> Id(bit @ bit) @ Copy() >> Encode(4)
-         >> H @ Id(3) >> Id(1) @ CX @ Id(1) >> Id(3) @ Rz(0.4)
-         >> CX @ Id(2) >> Id(2) @ CX >> Rx(0.3) @ Id(3)
-         >> Id(1) @ CX @ Id(1) >> Id(3) @ H >> Measure(4))
-    ]
-
-    for c in mixed_cs:
-        assert np.allclose(tn.contractors.auto(*c.to_tn()).tensor,
-                           c.eval().array)
-
-    pure_cs = [H >> X >> Z, CX >> H @ Rz(0.5)]
-    for c in pure_cs:
-        for b in (True, False):
-            assert np.allclose(tn.contractors.auto(*c.to_tn(mixed=b)).tensor,
-                               c.eval(mixed=b).array)
